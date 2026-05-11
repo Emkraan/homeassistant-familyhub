@@ -6,11 +6,17 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, SOURCE_IGNORE
 from homeassistant.helpers import config_entry_oauth2_flow
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from .api import AuthenticationError, FamilyHubAPI
-from .auth import AuthError, get_samsung_iot_credentials
+from .auth import AuthError, get_samsung_iot_credentials, get_samsung_iot_token
 from .const import (
     AUTH_MODE_OAUTH,
     AUTH_MODE_PAT,
@@ -31,13 +37,38 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def _smartthings_entries(hass):
-    from homeassistant.config_entries import SOURCE_IGNORE
-
     return [
         e
         for e in hass.config_entries.async_entries(SMARTTHINGS_DOMAIN)
         if e.source != SOURCE_IGNORE
     ]
+
+
+def _find_family_hub_devices(hass) -> list[dict]:
+    """Return Family Hub devices from all loaded SmartThings entries."""
+    results = []
+    for entry in hass.config_entries.async_entries(SMARTTHINGS_DOMAIN):
+        if entry.source == SOURCE_IGNORE:
+            continue
+        runtime = getattr(entry, "runtime_data", None)
+        if runtime is None:
+            continue
+        devices = getattr(runtime, "devices", {})
+        for device_id, full_device in devices.items():
+            main_status = getattr(full_device, "status", {}).get("main", {})
+            if "samsungce.viewInside" in main_status:
+                label = (
+                    getattr(getattr(full_device, "device", None), "label", None)
+                    or device_id
+                )
+                results.append(
+                    {
+                        "device_id": device_id,
+                        "label": label,
+                        "entry_id": entry.entry_id,
+                    }
+                )
+    return results
 
 
 class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -48,12 +79,10 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._linked_entry_id: str | None = None
         self._device_id: str | None = None
-        self._st_token: str | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """First step — show menu if SmartThings is available."""
         if _smartthings_entries(self.hass):
             return self.async_show_menu(
                 step_id="user",
@@ -61,93 +90,111 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
             )
         return await self.async_step_pat()
 
-    # ---- OAuth path ----
+    # ── OAuth path ────────────────────────────────────────────────────────────
 
     async def async_step_oauth(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Select SmartThings entry and enter Samsung Account for IoT token."""
-        entries = _smartthings_entries(self.hass)
+        """Select SmartThings entry and pick the Family Hub device."""
         errors: dict[str, str] = {}
-        options = {e.entry_id: e.title or e.entry_id for e in entries}
+        st_entries = _smartthings_entries(self.hass)
+        st_options = {e.entry_id: e.title or e.entry_id for e in st_entries}
+
+        # Find Family Hub devices already known to SmartThings
+        fh_devices = _find_family_hub_devices(self.hass)
 
         if user_input is not None:
             self._linked_entry_id = user_input[CONF_LINKED_SMARTTHINGS_ENTRY_ID]
-            self._device_id = user_input.get(CONF_DEVICE_ID) or None
-            return await self.async_step_samsung_account()
+            selected = user_input.get(CONF_DEVICE_ID) or None
+            if selected and selected != "__manual__":
+                self._device_id = selected
+            else:
+                self._device_id = None
+            return await self.async_step_samsung_iot()
+
+        # Build device options — filter to devices from selected ST entry if possible
+        device_options: list[SelectOptionDict] = []
+        for d in fh_devices:
+            device_options.append(
+                SelectOptionDict(value=d["device_id"], label=d["label"])
+            )
+        device_options.append(SelectOptionDict(value="__manual__", label="Auto-detect"))
+
+        schema_fields: dict = {
+            vol.Required(CONF_LINKED_SMARTTHINGS_ENTRY_ID): SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        SelectOptionDict(value=k, label=v)
+                        for k, v in st_options.items()
+                    ],
+                    mode=SelectSelectorMode.LIST,
+                )
+            ),
+            vol.Required(CONF_DEVICE_ID, default="__manual__"): SelectSelector(
+                SelectSelectorConfig(
+                    options=device_options,
+                    mode=SelectSelectorMode.LIST,
+                )
+            ),
+        }
 
         return self.async_show_form(
             step_id="oauth",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_LINKED_SMARTTHINGS_ENTRY_ID): vol.In(options),
-                    vol.Optional(CONF_DEVICE_ID): str,
-                }
-            ),
+            data_schema=vol.Schema(schema_fields),
             errors=errors,
         )
 
-    async def async_step_samsung_account(
+    async def async_step_samsung_iot(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Collect Samsung Account credentials to obtain the IoT image token."""
+        """Choose how to obtain the Samsung IoT token."""
+        if user_input is not None:
+            if user_input.get("method") == "credentials":
+                return await self.async_step_samsung_credentials()
+            return await self.async_step_samsung_token()
+
+        return self.async_show_menu(
+            step_id="samsung_iot",
+            menu_options=["samsung_credentials", "samsung_token"],
+        )
+
+    async def async_step_samsung_credentials(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Get Samsung IoT token via email + password (no 2FA accounts only)."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
             email = user_input[CONF_SAMSUNG_EMAIL].strip()
             password = user_input[CONF_SAMSUNG_PASSWORD]
-
-            smartthings_entry = self.hass.config_entries.async_get_entry(
-                self._linked_entry_id
-            )
-            impl = await config_entry_oauth2_flow.async_get_config_entry_implementation(
-                self.hass, smartthings_entry
-            )
-            session = config_entry_oauth2_flow.OAuth2Session(
-                self.hass, smartthings_entry, impl
-            )
             try:
-                await session.async_ensure_token_valid()
-                st_token = session.token["access_token"]
-
-                api = FamilyHubAPI(self.hass, token=st_token, device_id=self._device_id)
-                api.attach_oauth_session(session)
-                await api.async_authenticate()
+                api = await self._build_api()
                 if not self._device_id:
+                    await api.async_authenticate()
                     self._device_id = api.device_id
 
                 iot_creds = await self.hass.async_add_executor_job(
                     get_samsung_iot_credentials, email, password
                 )
             except AuthError as ex:
-                if "Invalid Samsung" in str(ex) or "password" in str(ex).lower():
+                msg = str(ex)
+                if "Invalid Samsung" in msg or "password" in msg.lower():
                     errors["base"] = "invalid_samsung_auth"
-                elif "2FA" in str(ex):
+                elif "2FA" in msg or "blocked" in msg:
                     errors["base"] = "samsung_2fa"
                 else:
                     errors["base"] = "samsung_auth_error"
-                _LOGGER.warning("Samsung Account auth failed: %s", ex)
+                _LOGGER.warning("Samsung credentials auth failed: %s", ex)
             except AuthenticationError:
                 errors["base"] = "invalid_auth"
             except Exception:
-                _LOGGER.exception("Unexpected error during setup")
+                _LOGGER.exception("Unexpected error during Samsung credential auth")
                 errors["base"] = "unknown"
             else:
-                await self.async_set_unique_id(self._device_id or self._linked_entry_id)
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title="Samsung Family Hub",
-                    data={
-                        CONF_AUTH_MODE: AUTH_MODE_OAUTH,
-                        CONF_LINKED_SMARTTHINGS_ENTRY_ID: self._linked_entry_id,
-                        CONF_DEVICE_ID: self._device_id,
-                        CONF_SAMSUNG_IOT_REFRESH_TOKEN: iot_creds.refresh_token,
-                        CONF_SAMSUNG_IOT_AUTH_SERVER: iot_creds.auth_server_url,
-                    },
-                )
+                return await self._create_oauth_entry(iot_creds.refresh_token)
 
         return self.async_show_form(
-            step_id="samsung_account",
+            step_id="samsung_credentials",
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_SAMSUNG_EMAIL): str,
@@ -155,17 +202,84 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
-            description_placeholders={
-                "help": "Enter your Samsung Account credentials (the same account used in the SmartThings app). 2FA must be disabled."
+        )
+
+    async def async_step_samsung_token(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Accept a Samsung IoT refresh token captured manually (supports 2FA)."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            refresh_token = user_input[CONF_SAMSUNG_IOT_REFRESH_TOKEN].strip()
+            try:
+                # Verify the token works by refreshing it
+                from .auth import refresh_samsung_iot_token
+
+                iot_creds = await self.hass.async_add_executor_job(
+                    refresh_samsung_iot_token, refresh_token
+                )
+
+                api = await self._build_api()
+                if not self._device_id:
+                    await api.async_authenticate()
+                    self._device_id = api.device_id
+
+            except AuthError:
+                errors["base"] = "invalid_samsung_token"
+            except AuthenticationError:
+                errors["base"] = "invalid_auth"
+            except Exception:
+                _LOGGER.exception("Unexpected error validating Samsung IoT token")
+                errors["base"] = "unknown"
+            else:
+                return await self._create_oauth_entry(iot_creds.refresh_token)
+
+        return self.async_show_form(
+            step_id="samsung_token",
+            data_schema=vol.Schema({vol.Required(CONF_SAMSUNG_IOT_REFRESH_TOKEN): str}),
+            errors=errors,
+        )
+
+    async def _build_api(self) -> FamilyHubAPI:
+        """Build a FamilyHubAPI using the linked SmartThings OAuth session."""
+        smartthings_entry = self.hass.config_entries.async_get_entry(
+            self._linked_entry_id
+        )
+        impl = await config_entry_oauth2_flow.async_get_config_entry_implementation(
+            self.hass, smartthings_entry
+        )
+        session = config_entry_oauth2_flow.OAuth2Session(
+            self.hass, smartthings_entry, impl
+        )
+        await session.async_ensure_token_valid()
+        api = FamilyHubAPI(
+            self.hass,
+            token=session.token["access_token"],
+            device_id=self._device_id,
+        )
+        api.attach_oauth_session(session)
+        return api
+
+    async def _create_oauth_entry(self, iot_refresh_token: str) -> ConfigFlowResult:
+        await self.async_set_unique_id(self._device_id or self._linked_entry_id)
+        self._abort_if_unique_id_configured()
+        return self.async_create_entry(
+            title="Samsung Family Hub",
+            data={
+                CONF_AUTH_MODE: AUTH_MODE_OAUTH,
+                CONF_LINKED_SMARTTHINGS_ENTRY_ID: self._linked_entry_id,
+                CONF_DEVICE_ID: self._device_id,
+                CONF_SAMSUNG_IOT_REFRESH_TOKEN: iot_refresh_token,
+                CONF_SAMSUNG_IOT_AUTH_SERVER: SAMSUNG_AUTH_SERVER,
             },
         )
 
-    # ---- PAT path (legacy) ----
+    # ── PAT path ──────────────────────────────────────────────────────────────
 
     async def async_step_pat(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Enter a SmartThings Personal Access Token."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -202,17 +316,15 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
-            description_placeholders={
-                "help": "Create a token at https://account.smartthings.com/tokens — note tokens expire after 24 hours."
-            },
         )
 
-    # ---- Reauth ----
+    # ── Reauth ────────────────────────────────────────────────────────────────
 
     async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
-        """Re-authenticate when the token has expired."""
         if entry_data.get(CONF_AUTH_MODE) == AUTH_MODE_OAUTH:
-            return await self.async_step_samsung_account()
+            self._linked_entry_id = entry_data.get(CONF_LINKED_SMARTTHINGS_ENTRY_ID)
+            self._device_id = entry_data.get(CONF_DEVICE_ID)
+            return await self.async_step_samsung_iot()
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
