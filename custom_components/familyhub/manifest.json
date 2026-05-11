@@ -1,7 +1,7 @@
 {
   "domain": "familyhub",
   "name": "Samsung Family Hub",
-  "version": "2026.5.5-beta",
+  "version": "2026.5.6-beta",
   "config_flow": true,
   "documentation": "https://github.com/Emkraan/homeassistant-familyhub",
   "issue_tracker": "https://github.com/Emkraan/homeassistant-familyhub/issues",
