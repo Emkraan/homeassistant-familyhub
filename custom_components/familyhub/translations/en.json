@@ -2,8 +2,6 @@
   "config": {
     "step": {
       "user": {
-        "title": "Samsung Family Hub",
-        "description": "Choose how to connect to your Family Hub refrigerator.",
         "menu_options": {
           "oauth": "Use existing SmartThings integration (recommended)",
           "pat": "Enter a Personal Access Token (legacy)"
@@ -18,16 +16,14 @@
         }
       },
       "samsung_iot": {
-        "title": "Samsung Account authentication",
-        "description": "Camera image downloads require a Samsung Account token separate from SmartThings. Choose how to provide it.",
         "menu_options": {
           "samsung_credentials": "Sign in with Samsung Account email and password (no 2FA)",
-          "samsung_token": "Paste a Samsung IoT refresh token (required for 2FA accounts)"
+          "samsung_token": "Paste a Samsung IoT refresh token (supports 2FA)"
         }
       },
       "samsung_credentials": {
         "title": "Samsung Account",
-        "description": "Enter your Samsung Account credentials. **2FA must be disabled** on this account. If 2FA is enabled, use the refresh token option instead.",
+        "description": "Enter your Samsung Account credentials. 2FA must be disabled on this account. If 2FA is enabled, go back and use the refresh token option.",
         "data": {
           "samsung_email": "Samsung Account email",
           "samsung_password": "Samsung Account password"
@@ -35,7 +31,7 @@
       },
       "samsung_token": {
         "title": "Samsung IoT refresh token",
-        "description": "Paste your Samsung IoT refresh token. To get one:\n1. Open browser dev tools (F12) → Network tab\n2. Log in to account.samsung.com with your Samsung Account (complete 2FA)\n3. Filter network requests for `samsungiotcloud.com`\n4. Find a token response and copy the `refresh_token` value\n\nThe token is long-lived and will auto-refresh — you only need to do this once.",
+        "description": "To get a token: open browser dev tools (F12), log in to account.samsung.com completing 2FA, filter network requests for 'samsungiotcloud.com', find a token response and copy the refresh_token value. The token auto-refreshes — you only do this once.",
         "data": {
           "samsung_iot_refresh_token": "Samsung IoT refresh token"
         }
@@ -60,10 +56,10 @@
       "cannot_connect": "Unable to connect to SmartThings.",
       "invalid_auth": "Invalid SmartThings token.",
       "invalid_samsung_auth": "Invalid Samsung Account email or password.",
-      "samsung_2fa": "This Samsung Account has 2FA enabled. Use the 'Paste a Samsung IoT refresh token' option instead.",
-      "samsung_auth_error": "Samsung Account authentication failed. Check your credentials and try again.",
+      "samsung_2fa": "2FA is enabled on this Samsung Account. Use the refresh token option instead.",
+      "samsung_auth_error": "Samsung Account authentication failed. Check credentials and try again.",
       "invalid_samsung_token": "The Samsung IoT refresh token is invalid or expired. Capture a new one.",
-      "unknown": "An unexpected error occurred. Check the logs for details."
+      "unknown": "Unexpected error. Check the logs."
     },
     "abort": {
       "already_configured": "This Family Hub is already configured.",
