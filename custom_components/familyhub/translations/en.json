@@ -30,7 +30,7 @@
       },
       "samsung_token": {
         "title": "Samsung IoT refresh token",
-        "description": "Log in to your [Samsung Account]({samsung_account_url}), then open browser dev tools, go to the Network tab, filter for 'samsungiotcloud.com', and copy the refresh_token from any token response. You only need to do this once.",
+        "description": "Log in to your [Samsung Account]({samsung_account_url}), then open browser dev tools → Network tab, filter for 'samsungosp.com', and copy the refresh_token from any token response. You only need to do this once.",
         "data": {
           "samsung_iot_refresh_token": "Refresh token"
         }
