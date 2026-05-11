@@ -16,7 +16,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .api import AuthenticationError, FamilyHubAPI
-from .auth import AuthError, get_samsung_iot_credentials, get_samsung_iot_token
+from .auth import AuthError, get_samsung_iot_credentials
 from .const import (
     AUTH_MODE_OAUTH,
     AUTH_MODE_PAT,
@@ -110,7 +110,7 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._device_id = selected
             else:
                 self._device_id = None
-            return await self.async_step_samsung_iot()
+            return await self.async_step_samsung_credentials()
 
         # Build device options — filter to devices from selected ST entry if possible
         device_options: list[SelectOptionDict] = []
@@ -142,20 +142,6 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="oauth",
             data_schema=vol.Schema(schema_fields),
             errors=errors,
-        )
-
-    async def async_step_samsung_iot(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Choose how to obtain the Samsung IoT token."""
-        if user_input is not None:
-            if user_input.get("method") == "credentials":
-                return await self.async_step_samsung_credentials()
-            return await self.async_step_samsung_token()
-
-        return self.async_show_menu(
-            step_id="samsung_iot",
-            menu_options=["samsung_credentials", "samsung_token"],
         )
 
     async def async_step_samsung_credentials(
@@ -201,46 +187,6 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_SAMSUNG_PASSWORD): str,
                 }
             ),
-            errors=errors,
-            description_placeholders={
-                "samsung_account_url": "https://account.samsung.com",
-            },
-        )
-
-    async def async_step_samsung_token(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Accept a Samsung IoT refresh token captured manually (supports 2FA)."""
-        errors: dict[str, str] = {}
-
-        if user_input is not None:
-            refresh_token = user_input[CONF_SAMSUNG_IOT_REFRESH_TOKEN].strip()
-            try:
-                # Verify the token works by refreshing it
-                from .auth import refresh_samsung_iot_token
-
-                iot_creds = await self.hass.async_add_executor_job(
-                    refresh_samsung_iot_token, refresh_token
-                )
-
-                api = await self._build_api()
-                if not self._device_id:
-                    await api.async_authenticate()
-                    self._device_id = api.device_id
-
-            except AuthError:
-                errors["base"] = "invalid_samsung_token"
-            except AuthenticationError:
-                errors["base"] = "invalid_auth"
-            except Exception:
-                _LOGGER.exception("Unexpected error validating Samsung IoT token")
-                errors["base"] = "unknown"
-            else:
-                return await self._create_oauth_entry(iot_creds.refresh_token)
-
-        return self.async_show_form(
-            step_id="samsung_token",
-            data_schema=vol.Schema({vol.Required(CONF_SAMSUNG_IOT_REFRESH_TOKEN): str}),
             errors=errors,
             description_placeholders={
                 "samsung_account_url": "https://account.samsung.com",
@@ -333,7 +279,7 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
         if entry_data.get(CONF_AUTH_MODE) == AUTH_MODE_OAUTH:
             self._linked_entry_id = entry_data.get(CONF_LINKED_SMARTTHINGS_ENTRY_ID)
             self._device_id = entry_data.get(CONF_DEVICE_ID)
-            return await self.async_step_samsung_iot()
+            return await self.async_step_samsung_credentials()
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(

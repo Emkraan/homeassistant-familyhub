@@ -14,25 +14,12 @@
           "device_id": "Refrigerator"
         }
       },
-      "samsung_iot": {
-        "menu_options": {
-          "samsung_credentials": "Sign in with Samsung Account (no 2FA)",
-          "samsung_token": "Paste a refresh token (2FA accounts)"
-        }
-      },
       "samsung_credentials": {
         "title": "Samsung Account",
-        "description": "2FA must be disabled on your [Samsung Account]({samsung_account_url}). If 2FA is on, go back and use the refresh token option.",
+        "description": "Enter your [Samsung Account]({samsung_account_url}) credentials to enable camera image downloads. If 2FA is enabled, disable it first or use a secondary Samsung account without 2FA.",
         "data": {
           "samsung_email": "Email",
           "samsung_password": "Password"
-        }
-      },
-      "samsung_token": {
-        "title": "Samsung IoT refresh token",
-        "description": "Log in to your [Samsung Account]({samsung_account_url}), then open browser dev tools → Network tab, filter for 'samsungosp.com', and copy the refresh_token from any token response. You only need to do this once.",
-        "data": {
-          "samsung_iot_refresh_token": "Refresh token"
         }
       },
       "pat": {
