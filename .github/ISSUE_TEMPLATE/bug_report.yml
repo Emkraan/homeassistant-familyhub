@@ -1,0 +1,96 @@
+name: Bug Report
+description: Report a problem with the Samsung Family Hub integration
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, please check [existing issues](../../issues) and enable debug logs (see README troubleshooting section).
+
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration Version
+      placeholder: "2026.5.0-beta"
+    validations:
+      required: true
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant Version
+      placeholder: "2024.6.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Installation Method
+      options:
+        - HACS
+        - Manual
+    validations:
+      required: true
+
+  - type: input
+    id: fridge_model
+    attributes:
+      label: Refrigerator Model
+      placeholder: "RF23M8960S4"
+    validations:
+      required: true
+
+  - type: input
+    id: ip_address
+    attributes:
+      label: Refrigerator IP Address
+      description: Confirm the device is reachable at this address from your HA host.
+      placeholder: "192.168.1.x"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Debug Logs
+      description: |
+        Add the following to `configuration.yaml`, restart HA, reproduce the issue, then paste logs here.
+        ```yaml
+        logger:
+          default: warning
+          logs:
+            custom_components.familyhub: debug
+        ```
+      render: text
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues
+          required: true
+        - label: I have included debug logs
+          required: true
+        - label: I can reach port 17654 on the refrigerator from my HA host
+          required: true

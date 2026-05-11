@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Samsung Family Hub",
+        "description": "Enter the IP address of your Samsung Family Hub refrigerator.",
+        "data": {
+          "ip_address": "IP Address",
+          "name": "Name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the Family Hub. Check the IP address and ensure the refrigerator is on the same network.",
+      "unknown": "An unexpected error occurred. Check the logs for details."
+    },
+    "abort": {
+      "already_configured": "This Family Hub is already configured."
+    }
+  },
+  "entity": {
+    "camera": {
+      "camera": {
+        "name": "Camera"
+      }
+    }
+  }
+}

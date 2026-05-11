@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/Emkraan/homeassistant-familyhub/discussions
+    about: Questions, ideas, and general discussion
+  - name: Samsung Support
+    url: https://www.samsung.com/us/support/
+    about: Hardware issues and manufacturer support
+  - name: Family Hub API Reference
+    url: https://github.com/Klathmon/python-family-hub-local
+    about: Upstream local API library reference

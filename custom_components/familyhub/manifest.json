@@ -1,0 +1,13 @@
+{
+  "domain": "familyhub",
+  "name": "Samsung Family Hub",
+  "version": "2026.5.0-beta",
+  "config_flow": true,
+  "documentation": "https://github.com/Emkraan/homeassistant-familyhub",
+  "issue_tracker": "https://github.com/Emkraan/homeassistant-familyhub/issues",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "requirements": ["Pillow>=9.0.0"],
+  "codeowners": ["@Emkraan"],
+  "loggers": ["custom_components.familyhub"]
+}
