@@ -202,6 +202,9 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+            description_placeholders={
+                "samsung_account_url": "https://account.samsung.com",
+            },
         )
 
     async def async_step_samsung_token(
@@ -239,6 +242,9 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="samsung_token",
             data_schema=vol.Schema({vol.Required(CONF_SAMSUNG_IOT_REFRESH_TOKEN): str}),
             errors=errors,
+            description_placeholders={
+                "samsung_account_url": "https://account.samsung.com",
+            },
         )
 
     async def _build_api(self) -> FamilyHubAPI:
@@ -316,6 +322,9 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+            description_placeholders={
+                "token_url": "https://account.smartthings.com/tokens",
+            },
         )
 
     # ── Reauth ────────────────────────────────────────────────────────────────

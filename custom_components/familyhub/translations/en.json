@@ -22,7 +22,7 @@
       },
       "samsung_credentials": {
         "title": "Samsung Account",
-        "description": "2FA must be disabled. If 2FA is on, go back and use the refresh token option.",
+        "description": "2FA must be disabled on your [Samsung Account]({samsung_account_url}). If 2FA is on, go back and use the refresh token option.",
         "data": {
           "samsung_email": "Email",
           "samsung_password": "Password"
@@ -30,14 +30,14 @@
       },
       "samsung_token": {
         "title": "Samsung IoT refresh token",
-        "description": "Log in at https://account.samsung.com, open browser dev tools, go to the Network tab, filter for 'samsungiotcloud.com', and copy the refresh_token from any token response. You only need to do this once.",
+        "description": "Log in to your [Samsung Account]({samsung_account_url}), then open browser dev tools, go to the Network tab, filter for 'samsungiotcloud.com', and copy the refresh_token from any token response. You only need to do this once.",
         "data": {
           "samsung_iot_refresh_token": "Refresh token"
         }
       },
       "pat": {
         "title": "SmartThings Personal Access Token",
-        "description": "Create a token at https://account.smartthings.com/tokens — tokens expire after 24 hours.",
+        "description": "Create a token at [account.smartthings.com]({token_url}). Tokens expire after 24 hours.",
         "data": {
           "token": "Personal Access Token",
           "device_id": "Device ID (leave blank to auto-detect)"
@@ -45,7 +45,7 @@
       },
       "reauth_confirm": {
         "title": "Re-authenticate",
-        "description": "Your token expired. Create a new one at https://account.smartthings.com/tokens",
+        "description": "Your token expired. Create a new one at [account.smartthings.com/tokens]({token_url}).",
         "data": {
           "token": "Personal Access Token"
         }
