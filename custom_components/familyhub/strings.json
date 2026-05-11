@@ -3,26 +3,55 @@
     "step": {
       "user": {
         "title": "Samsung Family Hub",
-        "description": "Enter the IP address of your Samsung Family Hub refrigerator.",
+        "description": "Choose how to authenticate with SmartThings.",
+        "menu_options": {
+          "oauth": "Use existing SmartThings integration (recommended)",
+          "pat": "Enter a Personal Access Token (legacy)"
+        }
+      },
+      "oauth": {
+        "title": "Select SmartThings integration",
+        "description": "Select the SmartThings integration to borrow credentials from.",
         "data": {
-          "ip_address": "IP Address",
-          "name": "Name"
+          "linked_smartthings_entry_id": "SmartThings integration",
+          "device_id": "Device ID (optional — leave blank to auto-detect)"
+        }
+      },
+      "samsung_account": {
+        "title": "Samsung Account",
+        "description": "Enter your Samsung Account credentials to enable camera image downloads. 2FA must be disabled on your account.",
+        "data": {
+          "samsung_email": "Samsung Account email",
+          "samsung_password": "Samsung Account password"
+        }
+      },
+      "pat": {
+        "title": "SmartThings Personal Access Token",
+        "description": "Tokens expire after 24 hours. Create one at https://account.smartthings.com/tokens",
+        "data": {
+          "token": "Personal Access Token",
+          "device_id": "Device ID (optional — leave blank to auto-detect)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate",
+        "description": "Your SmartThings token has expired. Enter a new one.",
+        "data": {
+          "token": "New Personal Access Token"
         }
       }
     },
     "error": {
-      "cannot_connect": "Unable to connect to the Family Hub. Check the IP address and ensure the refrigerator is on the same network.",
-      "unknown": "An unexpected error occurred. Check the logs for details."
+      "cannot_connect": "Unable to connect to SmartThings.",
+      "invalid_auth": "Invalid SmartThings token.",
+      "invalid_samsung_auth": "Invalid Samsung Account email or password.",
+      "samsung_2fa": "Samsung Account has 2FA enabled. Disable 2FA to use this integration.",
+      "samsung_auth_error": "Samsung Account authentication failed. Check credentials and try again.",
+      "unknown": "An unexpected error occurred. Check the logs."
     },
     "abort": {
-      "already_configured": "This Family Hub is already configured."
-    }
-  },
-  "entity": {
-    "camera": {
-      "camera": {
-        "name": "Camera"
-      }
+      "already_configured": "This Family Hub is already configured.",
+      "reauth_successful": "Re-authentication successful."
     }
   }
 }

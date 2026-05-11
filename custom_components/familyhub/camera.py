@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
-import logging
-
 from homeassistant.components.camera import Camera
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .hub import FamilyHub
+from . import FamilyHubData
+from .api import FamilyHubCoordinator
+from .const import DOMAIN
 
-_LOGGER = logging.getLogger(__name__)
+_CAMERAS = [
+    ("top", 0, "Top Camera"),
+    ("middle", 1, "Middle Camera"),
+    ("bottom", 2, "Bottom Camera"),
+]
 
 
 async def async_setup_entry(
@@ -20,24 +24,35 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Family Hub camera from a config entry."""
-    hub: FamilyHub = entry.runtime_data
-    async_add_entities([FamilyHubCamera(entry, hub)])
+    data: FamilyHubData = entry.runtime_data
+    async_add_entities(
+        FamilyHubCamera(entry, data.coordinator, key, idx, label)
+        for key, idx, label in _CAMERAS
+    )
 
 
-class FamilyHubCamera(Camera):
-    """Camera entity for the Samsung Family Hub refrigerator."""
+class FamilyHubCamera(CoordinatorEntity[FamilyHubCoordinator], Camera):
+    """A single refrigerator camera slot."""
 
     _attr_has_entity_name = True
-    _attr_translation_key = "camera"
+    content_type = "image/jpeg"
 
-    def __init__(self, entry: ConfigEntry, hub: FamilyHub) -> None:
-        super().__init__()
-        self._hub = hub
-        self._attr_unique_id = f"{entry.entry_id}_camera"
+    def __init__(
+        self,
+        entry: ConfigEntry,
+        coordinator: FamilyHubCoordinator,
+        key: str,
+        index: int,
+        label: str,
+    ) -> None:
+        CoordinatorEntity.__init__(self, coordinator)
+        Camera.__init__(self)
+        self._index = index
+        self._attr_name = label
+        self._attr_unique_id = f"{entry.entry_id}_{key}"
         self._attr_device_info = {
-            "identifiers": {("familyhub", entry.entry_id)},
-            "name": entry.data[CONF_NAME],
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": "Samsung Family Hub",
             "manufacturer": "Samsung",
             "model": "Family Hub",
         }
@@ -45,5 +60,7 @@ class FamilyHubCamera(Camera):
     async def async_camera_image(
         self, width: int | None = None, height: int | None = None
     ) -> bytes | None:
-        """Return a still image from the refrigerator camera."""
-        return await self._hub.async_get_cam_image()
+        images = self.coordinator.api.downloaded_images
+        if self._index < len(images):
+            return images[self._index]
+        return None
