@@ -1,14 +1,14 @@
 {
   "domain": "familyhub",
   "name": "Samsung Family Hub",
-  "version": "2026.5.13-beta",
+  "after_dependencies": ["smartthings"],
+  "codeowners": ["@Emkraan"],
   "config_flow": true,
   "documentation": "https://github.com/Emkraan/homeassistant-familyhub",
-  "issue_tracker": "https://github.com/Emkraan/homeassistant-familyhub/issues",
   "integration_type": "device",
   "iot_class": "cloud_polling",
-  "after_dependencies": ["smartthings"],
+  "issue_tracker": "https://github.com/Emkraan/homeassistant-familyhub/issues",
+  "loggers": ["custom_components.familyhub"],
   "requirements": ["requests>=2.28.0"],
-  "codeowners": ["@Emkraan"],
-  "loggers": ["custom_components.familyhub"]
+  "version": "2026.5.13-beta"
 }
