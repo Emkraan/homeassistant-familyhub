@@ -10,5 +10,5 @@
   "issue_tracker": "https://github.com/Emkraan/homeassistant-familyhub/issues",
   "loggers": ["custom_components.familyhub"],
   "requirements": ["requests>=2.28.0"],
-  "version": "2026.5.13-beta"
+  "version": "2026.8.10"
 }
