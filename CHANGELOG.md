@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.8.10 (2026-08-10)
+
+Promote from beta to stable. No functional changes since 2026.5.13-beta; CI and tooling
+compliance updates only (readme-freshness gate, shared ha-shared-workflows, Renovate,
+funding, CODEOWNERS, SECURITY.md).
+
+> **Note:** Samsung Account requires 2FA to be **disabled**. If 2FA is enabled, the
+> integration cannot authenticate. See the README for setup instructions.
+
+## 2026.5.13-beta (2026-05-11)
+
+### Changed
+- Remove impractical 2FA token capture — Samsung Account requires 2FA **disabled** to
+  authenticate. Updated README with 2FA requirement and setup instructions.
+
 ## 2026.5.1-beta (2026-05-11)
 
 Rebuilt for Tizen 4+ firmware — local HTTP API no longer available on newer Samsung firmware.
