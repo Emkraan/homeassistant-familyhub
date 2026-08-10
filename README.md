@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/Emkraan/homeassistant-familyhub/main/.github/homeassistant-familyhub.png" alt="Samsung Family Hub" width="120" />
 </p>
 
-<h1 align="center">Samsung Family Hub — Home Assistant Integration</h1>
+<h1 align="center">Samsung Family Hub - Home Assistant Integration</h1>
 
 <p align="center">
   SmartThings-powered camera integration for the Samsung Family Hub refrigerator.<br>
@@ -40,13 +40,13 @@
 
 ## Features
 
-- **GUI setup** — configure from Settings → Devices & Services, no YAML required
-- **Three camera entities** — top, middle, and bottom refrigerator camera slots
-- **Auto-refresh on door close** — detects fridge door events via SmartThings and triggers a fresh image capture
-- **Manual refresh** — `familyhub.refresh` service call triggers an immediate capture
-- **SmartThings OAuth** — reuses your existing HA SmartThings integration credentials, tokens auto-refresh
-- **Last updated sensor** — timestamp of when images were last downloaded
-- **Full model support** — works with any Family Hub model visible in SmartThings
+- **GUI setup** - configure from Settings → Devices & Services, no YAML required
+- **Three camera entities** - top, middle, and bottom refrigerator camera slots
+- **Auto-refresh on door close** - detects fridge door events via SmartThings and triggers a fresh image capture
+- **Manual refresh** - `familyhub.refresh` service call triggers an immediate capture
+- **SmartThings OAuth** - reuses your existing HA SmartThings integration credentials, tokens auto-refresh
+- **Last updated sensor** - timestamp of when images were last downloaded
+- **Full model support** - works with any Family Hub model visible in SmartThings
 
 ---
 
@@ -57,8 +57,8 @@
 | Home Assistant | 2024.1.0 or newer |
 | HACS | 1.34.0 or newer |
 | SmartThings | HA core SmartThings integration configured with your Samsung account |
-| Samsung Account | Required for image downloads (separate IoT token — one-time setup) |
-| Firmware | Tizen 4+ (newer Family Hub models) — uses SmartThings cloud API |
+| Samsung Account | Required for image downloads (separate IoT token - one-time setup) |
+| Firmware | Tizen 4+ (newer Family Hub models) - uses SmartThings cloud API |
 
 > **Note:** Older firmware (Tizen 3 and earlier) used a local HTTP API on port 17654. That API is no longer available on current firmware. This integration uses the SmartThings cloud API instead.
 
@@ -76,7 +76,7 @@ Or manually:
 
 1. Open **HACS → Integrations**.
 2. Click the menu (⋮) → **Custom repositories**.
-3. Add `https://github.com/Emkraan/homeassistant-familyhub` — category: **Integration**.
+3. Add `https://github.com/Emkraan/homeassistant-familyhub` - category: **Integration**.
 4. Search for **Samsung Family Hub** and click **Download**.
 5. Restart Home Assistant.
 
@@ -97,21 +97,21 @@ Or manually:
 3. Select your SmartThings entry and your refrigerator from the dropdown
 4. Choose how to authenticate your Samsung Account for image downloads:
 
-### Option A — Email and password (no 2FA)
+### Option A - Email and password (no 2FA)
 
 Enter your Samsung Account credentials directly. 2FA must be disabled on the account.
 
-### Option B — Refresh token (2FA accounts)
+### Option B - Refresh token (2FA accounts)
 
 If 2FA is enabled, you need to capture a Samsung IoT refresh token once from your browser:
 
 1. Open [account.samsung.com](https://account.samsung.com) in a browser and open **Developer Tools → Network tab**
 2. Log in with your Samsung Account (complete 2FA when prompted)
 3. Filter network requests for `samsungosp.com`
-4. Look for a POST request to `/auth/oauth2/token` — open its response
+4. Look for a POST request to `/auth/oauth2/token` - open its response
 5. Copy the `refresh_token` value and paste it into the integration
 
-The token is long-lived and auto-refreshes — you only do this once.
+The token is long-lived and auto-refreshes - you only do this once.
 
 ---
 
@@ -141,7 +141,7 @@ The token is long-lived and auto-refreshes — you only do this once.
 
 ```yaml
 automation:
-  - alias: "Family Hub — Fridge image updated"
+  - alias: "Family Hub - Fridge image updated"
     trigger:
       - platform: state
         entity_id: sensor.samsung_family_hub_images_last_updated
@@ -196,7 +196,7 @@ logger:
 
 Samsung Family Hub refrigerators on Tizen 4+ firmware expose their camera images through the SmartThings cloud API rather than a local HTTP endpoint.
 
-**Authentication — two tokens required:**
+**Authentication - two tokens required:**
 
 | Token | Purpose | Source |
 |---|---|---|
