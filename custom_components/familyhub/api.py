@@ -241,6 +241,21 @@ class FamilyHubAPI:
             try:
                 resp = requests.get(url, headers=dl_headers, timeout=DEFAULT_TIMEOUT)
                 self._check(resp)
+                content_type = resp.headers.get("Content-Type", "")
+                if not content_type.startswith("image/"):
+                    _LOGGER.warning(
+                        "Image[%d] download returned non-image content-type %r "
+                        "(status %s) — Samsung IoT credentials may be required",
+                        idx,
+                        content_type,
+                        resp.status_code,
+                    )
+                    _LOGGER.debug(
+                        "Image[%d] response body (first 500 bytes): %s",
+                        idx,
+                        resp.text[:500],
+                    )
+                    continue
                 results[idx] = resp.content
                 successes += 1
             except AuthenticationError:
