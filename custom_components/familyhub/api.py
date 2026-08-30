@@ -86,8 +86,11 @@ class FamilyHubCoordinator(DataUpdateCoordinator):
                 success = await self.hass.async_add_executor_job(
                     self.api.download_images
                 )
+                # Always update last_file_ids so failed downloads don't spam
+                # warnings on every poll. A new door-close produces new file IDs
+                # which will trigger a fresh attempt automatically.
+                self.last_file_ids = current_ids
                 if success:
-                    self.last_file_ids = current_ids
                     self.last_updated_at = time.time()
 
         except AuthenticationError as err:
@@ -241,6 +244,9 @@ class FamilyHubAPI:
             try:
                 resp = requests.get(url, headers=dl_headers, timeout=DEFAULT_TIMEOUT)
                 self._check(resp)
+                if resp.status_code != 200:
+                    # _check() already logged the non-2xx warning; skip content check
+                    continue
                 content_type = resp.headers.get("Content-Type", "")
                 if not content_type.startswith("image/"):
                     _LOGGER.warning(
