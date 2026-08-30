@@ -15,11 +15,24 @@
         }
       },
       "samsung_credentials": {
-        "title": "Samsung Account",
-        "description": "Enter your [Samsung Account]({samsung_account_url}) credentials to enable camera image downloads. If 2FA is enabled, disable it first or use a secondary Samsung account without 2FA.",
+        "menu_options": {
+          "samsung_login": "Email and password (no 2FA)",
+          "samsung_token": "Provide refresh token directly (2FA / social login)"
+        }
+      },
+      "samsung_login": {
+        "title": "Samsung Account — Email and Password",
+        "description": "Enter your [Samsung Account]({samsung_account_url}) credentials. This only works for accounts where two-step verification is disabled.",
         "data": {
           "samsung_email": "Email",
           "samsung_password": "Password"
+        }
+      },
+      "samsung_token": {
+        "title": "Samsung Account — Refresh Token",
+        "description": "Paste a Samsung IoT refresh token. See the [README]({readme_url}) for instructions on how to capture it from your browser (one-time setup).",
+        "data": {
+          "samsung_iot_refresh_token": "Samsung IoT Refresh Token"
         }
       },
       "pat": {
@@ -42,9 +55,9 @@
       "cannot_connect": "Unable to connect to SmartThings.",
       "invalid_auth": "Invalid SmartThings token.",
       "invalid_samsung_auth": "Invalid Samsung Account email or password.",
-      "samsung_2fa": "2FA is enabled — go back and use the refresh token option.",
+      "samsung_2fa": "2FA is enabled on this account. Go back and choose 'Provide refresh token directly'.",
       "samsung_auth_error": "Samsung Account authentication failed. Check credentials and try again.",
-      "invalid_samsung_token": "Invalid or expired refresh token. Capture a new one.",
+      "invalid_samsung_token": "Invalid or expired refresh token. Capture a fresh one and try again.",
       "unknown": "Unexpected error. Check the logs."
     },
     "abort": {
