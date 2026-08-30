@@ -103,6 +103,10 @@ def get_samsung_iot_credentials(email: str, password: str) -> SamsungIoTCredenti
     if resp.status_code == 401:
         raise AuthError("Invalid Samsung Account email or password.")
     if resp.status_code == 403:
+        _LOGGER.debug(
+            "Samsung requestAuthentication returned 403 — full response body: %s",
+            resp.text[:1000],
+        )
         raise AuthError(
             "Samsung Account login blocked. If 2FA is enabled on your account, "
             "this integration cannot authenticate. Disable 2FA or use a sub-account."
