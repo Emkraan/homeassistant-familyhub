@@ -101,17 +101,30 @@ Or manually:
 
 Enter your Samsung Account credentials directly. 2FA must be disabled on the account.
 
-### Option B - Refresh token (2FA accounts)
+### Option B - Refresh token (2FA / social login)
 
-If 2FA is enabled, you need to capture a Samsung IoT refresh token once from your browser:
+The Samsung IoT refresh token the integration needs is scoped to `iot.client` and is issued by
+the Samsung Account server using a specific client ID (`6iado3s6jc`). It is **not** the token
+issued when you log into `account.samsung.com` in a browser - that uses a different client and
+will not work here.
 
-1. Open [account.samsung.com](https://account.samsung.com) in a browser and open **Developer Tools → Network tab**
-2. Log in with your Samsung Account (complete 2FA when prompted)
-3. Filter network requests for `samsungosp.com`
-4. Look for a POST request to `/auth/oauth2/token` - open its response
-5. Copy the `refresh_token` value and paste it into the integration
+The most reliable source for this token is the **SmartThings mobile app** on Android or iOS:
 
-The token is long-lived and auto-refreshes - you only do this once.
+1. Install [mitmproxy](https://mitmproxy.org/) (or Charles Proxy) and set your phone to route
+   through it
+2. Install the mitmproxy CA certificate on your device so HTTPS is visible
+3. Open the SmartThings app and sign in with your Samsung Account (complete 2FA when prompted)
+4. In the proxy, filter requests to `samsungosp.com`
+5. Find a POST to `/auth/oauth2/token` - the response body contains `refresh_token`
+6. Copy that value and paste it into the integration
+
+The token is long-lived and auto-refreshes - you only need to do this once.
+
+### Option C - Skip (try SmartThings token for images)
+
+Choose **Skip** to complete setup without Samsung Account credentials. Image downloads will use
+your existing SmartThings token. This works for some accounts and firmware versions. If images
+never populate after a door close, reconfigure and use Option B.
 
 ---
 
@@ -177,7 +190,7 @@ camera_view: auto
 | Camera entities unavailable | SmartThings API unreachable | Check internet connectivity from HA host |
 | Images never update | Samsung IoT token invalid | Reconfigure the integration and re-enter credentials |
 | Wrong images / no images | Fridge not detected in SmartThings | Ensure the refrigerator appears in your SmartThings integration with the `samsungce.viewInside` capability |
-| 2FA error during setup | 2FA enabled on Samsung Account | Use the refresh token option instead of email/password |
+| 2FA error during setup | 2FA enabled on Samsung Account | Use Option B (refresh token from SmartThings app) or Option C (skip) |
 | Images are stale | No door-close event received | Trigger manually via `familyhub.refresh` service |
 
 **Enable debug logging:**
@@ -196,12 +209,15 @@ logger:
 
 Samsung Family Hub refrigerators on Tizen 4+ firmware expose their camera images through the SmartThings cloud API rather than a local HTTP endpoint.
 
-**Authentication - two tokens required:**
+**Authentication:**
 
 | Token | Purpose | Source |
 |---|---|---|
 | SmartThings OAuth | Device status polling, refresh commands | Reused from HA core SmartThings integration |
-| Samsung IoT token | Image downloads from `client.smartthings.com` | Samsung Account credentials (one-time setup) |
+| Samsung IoT token (optional) | Image downloads from `client.smartthings.com` | Samsung Account credentials or SmartThings mobile app capture |
+
+The Samsung IoT token is optional. If not provided, image downloads fall back to the SmartThings
+token, which works for many accounts. Set it only if images fail to populate after door-close events.
 
 **Endpoints used:**
 

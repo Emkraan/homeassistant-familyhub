@@ -17,11 +17,12 @@
       "samsung_credentials": {
         "menu_options": {
           "samsung_login": "Email and password (no 2FA)",
-          "samsung_token": "Provide refresh token directly (2FA / social login)"
+          "samsung_token": "Provide refresh token directly (2FA / social login)",
+          "samsung_skip": "Skip (use SmartThings token for images)"
         }
       },
       "samsung_login": {
-        "title": "Samsung Account — Email and Password",
+        "title": "Samsung Account - Email and Password",
         "description": "Enter your [Samsung Account]({samsung_account_url}) credentials. This only works for accounts where two-step verification is disabled.",
         "data": {
           "samsung_email": "Email",
@@ -29,8 +30,8 @@
         }
       },
       "samsung_token": {
-        "title": "Samsung Account — Refresh Token",
-        "description": "Paste a Samsung IoT refresh token. See the [README]({readme_url}) for instructions on how to capture it from your browser (one-time setup).",
+        "title": "Samsung Account - Refresh Token",
+        "description": "Paste a Samsung IoT refresh token captured from the SmartThings mobile app. Use a proxy tool (mitmproxy, Charles) on your phone, log into SmartThings, then copy the `refresh_token` from a POST to `/auth/oauth2/token` on `samsungosp.com`.",
         "data": {
           "samsung_iot_refresh_token": "Samsung IoT Refresh Token"
         }
@@ -55,9 +56,9 @@
       "cannot_connect": "Unable to connect to SmartThings.",
       "invalid_auth": "Invalid SmartThings token.",
       "invalid_samsung_auth": "Invalid Samsung Account email or password.",
-      "samsung_2fa": "2FA is enabled on this account. Go back and choose 'Provide refresh token directly'.",
+      "samsung_2fa": "2FA is enabled on this account. Go back and choose 'Provide refresh token directly' or 'Skip'.",
       "samsung_auth_error": "Samsung Account authentication failed. Check credentials and try again.",
-      "invalid_samsung_token": "Invalid or expired refresh token. Capture a fresh one and try again.",
+      "invalid_samsung_token": "Invalid or expired refresh token. Capture a fresh one from the SmartThings mobile app.",
       "unknown": "Unexpected error. Check the logs."
     },
     "abort": {

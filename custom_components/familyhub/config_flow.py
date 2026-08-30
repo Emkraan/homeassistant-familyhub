@@ -147,11 +147,24 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_samsung_credentials(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Samsung auth method menu: email+password or direct refresh token."""
+        """Samsung auth method menu: email+password, direct refresh token, or skip."""
         return self.async_show_menu(
             step_id="samsung_credentials",
-            menu_options=["samsung_login", "samsung_token"],
+            menu_options=["samsung_login", "samsung_token", "samsung_skip"],
         )
+
+    async def async_step_samsung_skip(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Skip Samsung auth - image downloads will use the SmartThings token."""
+        if not self._device_id:
+            try:
+                api = await self._build_api()
+                await api.async_authenticate()
+                self._device_id = api.device_id
+            except Exception:
+                _LOGGER.exception("Device auto-detection failed during skip step")
+        return await self._create_oauth_entry(None)
 
     async def async_step_samsung_login(
         self, user_input: dict[str, Any] | None = None
@@ -263,19 +276,20 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
         api.attach_oauth_session(session)
         return api
 
-    async def _create_oauth_entry(self, iot_refresh_token: str) -> ConfigFlowResult:
+    async def _create_oauth_entry(
+        self, iot_refresh_token: str | None
+    ) -> ConfigFlowResult:
         await self.async_set_unique_id(self._device_id or self._linked_entry_id)
         self._abort_if_unique_id_configured()
-        return self.async_create_entry(
-            title="Samsung Family Hub",
-            data={
-                CONF_AUTH_MODE: AUTH_MODE_OAUTH,
-                CONF_LINKED_SMARTTHINGS_ENTRY_ID: self._linked_entry_id,
-                CONF_DEVICE_ID: self._device_id,
-                CONF_SAMSUNG_IOT_REFRESH_TOKEN: iot_refresh_token,
-                CONF_SAMSUNG_IOT_AUTH_SERVER: SAMSUNG_AUTH_SERVER,
-            },
-        )
+        data: dict = {
+            CONF_AUTH_MODE: AUTH_MODE_OAUTH,
+            CONF_LINKED_SMARTTHINGS_ENTRY_ID: self._linked_entry_id,
+            CONF_DEVICE_ID: self._device_id,
+        }
+        if iot_refresh_token:
+            data[CONF_SAMSUNG_IOT_REFRESH_TOKEN] = iot_refresh_token
+            data[CONF_SAMSUNG_IOT_AUTH_SERVER] = SAMSUNG_AUTH_SERVER
+        return self.async_create_entry(title="Samsung Family Hub", data=data)
 
     # ── PAT path ──────────────────────────────────────────────────────────────
 
