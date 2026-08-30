@@ -16,7 +16,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .api import AuthenticationError, FamilyHubAPI
-from .auth import AuthError, get_samsung_iot_credentials
+from .auth import AuthError, get_samsung_iot_credentials, refresh_samsung_iot_token
 from .const import (
     AUTH_MODE_OAUTH,
     AUTH_MODE_PAT,
@@ -147,7 +147,16 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_samsung_credentials(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Get Samsung IoT token via email + password (no 2FA accounts only)."""
+        """Samsung auth method menu: email+password or direct refresh token."""
+        return self.async_show_menu(
+            step_id="samsung_credentials",
+            menu_options=["samsung_login", "samsung_token"],
+        )
+
+    async def async_step_samsung_login(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Get Samsung IoT token via email + password (accounts without 2FA)."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -180,7 +189,7 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self._create_oauth_entry(iot_creds.refresh_token)
 
         return self.async_show_form(
-            step_id="samsung_credentials",
+            step_id="samsung_login",
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_SAMSUNG_EMAIL): str,
@@ -190,6 +199,47 @@ class FamilyHubConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
             description_placeholders={
                 "samsung_account_url": "https://account.samsung.com",
+            },
+        )
+
+    async def async_step_samsung_token(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Accept a Samsung IoT refresh token directly (2FA / social login accounts)."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            token = user_input[CONF_SAMSUNG_IOT_REFRESH_TOKEN].strip()
+            try:
+                if not self._device_id:
+                    api = await self._build_api()
+                    await api.async_authenticate()
+                    self._device_id = api.device_id
+
+                iot_creds = await self.hass.async_add_executor_job(
+                    refresh_samsung_iot_token, token
+                )
+            except AuthError:
+                errors["base"] = "invalid_samsung_token"
+                _LOGGER.warning("Samsung IoT refresh token validation failed")
+            except AuthenticationError:
+                errors["base"] = "invalid_auth"
+            except Exception:
+                _LOGGER.exception("Unexpected error validating Samsung IoT refresh token")
+                errors["base"] = "unknown"
+            else:
+                return await self._create_oauth_entry(iot_creds.refresh_token)
+
+        return self.async_show_form(
+            step_id="samsung_token",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_SAMSUNG_IOT_REFRESH_TOKEN): str,
+                }
+            ),
+            errors=errors,
+            description_placeholders={
+                "readme_url": "https://github.com/Emkraan/homeassistant-familyhub#option-b---refresh-token-2fa-accounts",
             },
         )
 
